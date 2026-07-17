@@ -1,0 +1,160 @@
+[
+  {
+    "id": "EDGE-01",
+    "name": "Perfect skill but unavailable",
+    "requirement_id": "REQ-0001",
+    "talent_id": "TAL-0471",
+    "expect_eligible": false,
+    "expect_failed_gates": ["availability"]
+  },
+  {
+    "id": "EDGE-02",
+    "name": "Missing UAE authorization",
+    "requirement_id": "REQ-0001",
+    "talent_id": "TAL-0064",
+    "expect_eligible": false,
+    "expect_failed_gates": ["work_authorization"]
+  },
+  {
+    "id": "EDGE-03",
+    "name": "Over budget elite",
+    "requirement_id": "REQ-0001",
+    "talent_id": "TAL-0502",
+    "expect_eligible": false,
+    "expect_failed_gates": ["budget"]
+  },
+  {
+    "id": "EDGE-04",
+    "name": "Audition below threshold",
+    "requirement_id": "REQ-0001",
+    "talent_id": "TAL-0503",
+    "expect_eligible": false,
+    "expect_failed_gates": ["audition"]
+  },
+  {
+    "id": "EDGE-05",
+    "name": "Missing diving certification",
+    "requirement_id": "REQ-0001",
+    "talent_id": "TAL-0501",
+    "expect_eligible": false,
+    "expect_failed_gates": ["mandatory_skills", "safety_certs"]
+  },
+  {
+    "id": "EDGE-06",
+    "name": "Overnight conflict",
+    "requirement_id": "REQ-0001",
+    "talent_id": "TAL-0701",
+    "expect_eligible": false,
+    "expect_failed_gates": ["overnight"]
+  },
+  {
+    "id": "EDGE-07",
+    "name": "Secondary role match",
+    "requirement_id": "REQ-0001",
+    "talent_id": "TAL-0294",
+    "expect_eligible": true,
+    "expect_via_secondary": true
+  },
+  {
+    "id": "EDGE-08",
+    "name": "Credit reliability highlight",
+    "requirement_id": "REQ-0001",
+    "talent_id": "TAL-0379",
+    "expect_eligible": true,
+    "min_credit_rating": 4.6
+  },
+  {
+    "id": "EDGE-09",
+    "name": "Excellent score band",
+    "requirement_id": "REQ-0001",
+    "talent_id": "TAL-0378",
+    "expect_eligible": true,
+    "min_score": 85.0,
+    "expect_score_label_contains": "Outstanding"
+  },
+  {
+    "id": "EDGE-10",
+    "name": "Visa sponsorship unlocks candidate",
+    "requirement_id": "REQ-0001",
+    "talent_id": "TAL-0064",
+    "params_override": {"allow_visa_sponsorship": true},
+    "expect_eligible": true
+  },
+  {
+    "id": "EDGE-11",
+    "name": "Pyro role mismatch on aerial req",
+    "requirement_id": "REQ-0001",
+    "talent_id": "TAL-0601",
+    "expect_eligible": false,
+    "expect_failed_gates": ["mandatory_skills", "safety_certs"]
+  },
+  {
+    "id": "EDGE-12",
+    "name": "Within budget badge",
+    "requirement_id": "REQ-0001",
+    "talent_id": "TAL-0378",
+    "expect_eligible": true,
+    "expect_budget_status": "Within Budget"
+  },
+  {
+    "id": "EDGE-13",
+    "name": "Travel ready badge",
+    "requirement_id": "REQ-0001",
+    "talent_id": "TAL-0379",
+    "expect_eligible": true,
+    "expect_travel_badge": "Ready"
+  },
+  {
+    "id": "EDGE-14",
+    "name": "Needs sponsorship badge when allowed",
+    "requirement_id": "REQ-0001",
+    "talent_id": "TAL-0064",
+    "params_override": {"allow_visa_sponsorship": true},
+    "expect_eligible": true,
+    "expect_travel_badge": "Needs Sponsorship"
+  },
+  {
+    "id": "EDGE-15",
+    "name": "Abu Dhabi distance measurable",
+    "requirement_id": "REQ-0001",
+    "talent_id": "TAL-0294",
+    "expect_eligible": true,
+    "min_distance_km": 100
+  },
+  {
+    "id": "EDGE-16",
+    "name": "Top shortlist includes Layla",
+    "requirement_id": "REQ-0001",
+    "expect_in_top5": ["TAL-0378"]
+  },
+  {
+    "id": "EDGE-17",
+    "name": "Unavailable talent never shortlisted",
+    "requirement_id": "REQ-0001",
+    "expect_not_in_top5": ["TAL-0471"]
+  },
+  {
+    "id": "EDGE-18",
+    "name": "Pyro req finds Hassan",
+    "requirement_id": "REQ-0002",
+    "talent_id": "TAL-0601",
+    "expect_eligible": true,
+    "min_score": 70.0
+  },
+  {
+    "id": "EDGE-19",
+    "name": "Raised budget admits Elena",
+    "requirement_id": "REQ-0001",
+    "talent_id": "TAL-0502",
+    "params_override": {"max_budget": 1500},
+    "expect_eligible": true
+  },
+  {
+    "id": "EDGE-20",
+    "name": "Lower audition threshold admits Chen",
+    "requirement_id": "REQ-0001",
+    "talent_id": "TAL-0503",
+    "params_override": {"audition_threshold": 65.0},
+    "expect_eligible": true
+  }
+]

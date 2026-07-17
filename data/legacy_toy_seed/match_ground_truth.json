@@ -1,0 +1,14 @@
+{
+  "REQ-0001": {
+    "eligible_ids": ["TAL-0378", "TAL-0379", "TAL-0294", "TAL-0412", "TAL-0415"],
+    "top_5": ["TAL-0379", "TAL-0378", "TAL-0415", "TAL-0412", "TAL-0294"],
+    "must_reject": {
+      "TAL-0471": ["availability"],
+      "TAL-0064": ["work_authorization"],
+      "TAL-0501": ["mandatory_skills", "safety_certs"],
+      "TAL-0502": ["budget"],
+      "TAL-0503": ["audition"],
+      "TAL-0701": ["overnight"]
+    }
+  }
+}

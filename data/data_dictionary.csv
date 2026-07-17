@@ -1,0 +1,196 @@
+file_name,field_name,data_type,nullable,description,example_value,validation_rule
+talent_profiles.csv,talent_id,object,False,Unique synthetic talent identifier,TAL-0001,Unique and non-null for primary identifiers; valid foreign key where applicable
+talent_profiles.csv,full_name,object,False,Full name,Allison Hill,
+talent_profiles.csv,profile_title,object,False,Profile title,Resident Show Character Performer,
+talent_profiles.csv,talent_category,object,False,Talent category,Performer,
+talent_profiles.csv,primary_role,object,False,Primary role,Character Performer,
+talent_profiles.csv,secondary_roles,object,True,Secondary roles,BMX Rider,
+talent_profiles.csv,primary_skills,object,False,Primary skills,BMX Flatland|Character Acting|Choreographed Riding|Click Track|Costume Endurance|Harmony Singing|Improvisation|Instrument Maintenance|Live Performance|Mask Performance|Multilingual Repertoire|Night Rehearsals|Parade Performance|Physical Theatre|Risk Assessment|Sight Reading|Vocal Endurance,
+talent_profiles.csv,secondary_skills,object,True,Secondary skills,BMX Flatland|Risk Assessment|Choreographed Riding,
+talent_profiles.csv,experience_years,float64,False,Experience years,9.8,
+talent_profiles.csv,city,object,False,City,Amsterdam,
+talent_profiles.csv,country,object,False,Country,Netherlands,
+talent_profiles.csv,latitude,float64,False,Latitude,52.3676,
+talent_profiles.csv,longitude,float64,False,Longitude,4.9041,
+talent_profiles.csv,home_market_region,object,False,Home market region,Netherlands,
+talent_profiles.csv,travel_ready,bool,False,Travel ready,True,
+talent_profiles.csv,relocation_available,bool,False,Relocation available,True,
+talent_profiles.csv,passport_valid_until,object,False,Passport valid until,2029-02-10,ISO-8601 date with logical chronology
+talent_profiles.csv,work_authorized_countries,object,False,Work authorized countries,Netherlands|Saudi Arabia|Singapore,
+talent_profiles.csv,weekly_contract_rate_usd,float64,False,Weekly contract rate usd,7000.0,Non-negative monetary value
+talent_profiles.csv,rehearsal_day_rate_usd,float64,False,Rehearsal day rate usd,550.0,Non-negative monetary value
+talent_profiles.csv,performance_fee_usd,float64,False,Performance fee usd,1050.0,Non-negative monetary value
+talent_profiles.csv,buyout_rate_usd,float64,False,Buyout rate usd,2300.0,Non-negative monetary value
+talent_profiles.csv,languages,object,False,Languages,Dutch|English,
+talent_profiles.csv,showreel_quality_score,float64,False,Showreel quality score,75.6,Between 0 and 100
+talent_profiles.csv,audition_readiness_score,float64,False,Audition readiness score,74.7,Between 0 and 100
+talent_profiles.csv,physical_skill_level,object,False,Physical skill level,Elite,
+talent_profiles.csv,aquatic_performance_experience,bool,False,Aquatic performance experience,True,
+talent_profiles.csv,aerial_performance_experience,bool,False,Aerial performance experience,False,
+talent_profiles.csv,stunt_experience,bool,False,Stunt experience,False,
+talent_profiles.csv,medical_clearance_status,object,False,Medical clearance status,Cleared,
+talent_profiles.csv,safety_training_level,object,False,Safety training level,Advanced,
+talent_profiles.csv,professional_certifications,object,True,Professional certifications,First Aid,
+talent_profiles.csv,portfolio_quality_score,float64,False,Portfolio quality score,80.8,Between 0 and 100
+talent_profiles.csv,average_director_rating,float64,True,Average director rating,4.25,"Between 0 and 5, or null for new talent"
+talent_profiles.csv,completed_productions,int64,False,Completed productions,7,
+talent_profiles.csv,completed_performances,int64,False,Completed performances,62,
+talent_profiles.csv,rehire_rate,float64,False,Rehire rate,0.2857,Non-negative monetary value
+talent_profiles.csv,rehearsal_attendance_rate,float64,False,Rehearsal attendance rate,0.9529,Non-negative monetary value
+talent_profiles.csv,safety_incident_rate,float64,False,Safety incident rate,0.0,Non-negative monetary value
+talent_profiles.csv,cancellation_rate,float64,False,Cancellation rate,0.0,Non-negative monetary value
+talent_profiles.csv,response_time_hours,float64,False,Response time hours,4.7,
+talent_profiles.csv,profile_completion_percentage,float64,False,Profile completion percentage,90.0,
+talent_profiles.csv,identity_verified,bool,False,Identity verified,True,
+talent_profiles.csv,professional_references_verified,bool,False,Professional references verified,True,
+talent_profiles.csv,preferred_production_types,object,False,Preferred production types,Large-Scale Parade|Integrated Resort Show|Cultural Landmark Ceremony|Themed Entertainment Spectacle,
+talent_profiles.csv,overnight_rehearsal_available,bool,False,Overnight rehearsal available,True,
+talent_profiles.csv,weekend_available,bool,False,Weekend available,False,
+talent_profiles.csv,last_active_date,object,False,Last active date,2026-06-29,ISO-8601 date with logical chronology
+talent_profiles.csv,profile_status,object,False,Profile status,Active,
+production_requirements.csv,requirement_id,object,False,Unique production requirement identifier,REQ-0001,Unique and non-null for primary identifiers; valid foreign key where applicable
+production_requirements.csv,production_id,object,False,Production id,PROD-0001,Unique and non-null for primary identifiers; valid foreign key where applicable
+production_requirements.csv,production_title,object,False,Production title,Total needs-based conglomeration Experience,
+production_requirements.csv,production_type,object,False,Production type,Outdoor Multimedia Spectacle,
+production_requirements.csv,fictional_client_id,object,False,Fictional client id,CLI-0029,Unique and non-null for primary identifiers; valid foreign key where applicable
+production_requirements.csv,required_category,object,False,Required category,Performer,
+production_requirements.csv,required_primary_role,object,False,Required primary role,Musician,
+production_requirements.csv,acceptable_secondary_roles,object,True,Acceptable secondary roles,Dancer|Aerial Artist,
+production_requirements.csv,mandatory_skills,object,False,Mandatory skills,Instrument Maintenance|Live Performance|Sight Reading|Ensemble Performance,
+production_requirements.csv,preferred_skills,object,False,Preferred skills,Improvisation,
+production_requirements.csv,city,object,False,City,Abu Dhabi,
+production_requirements.csv,country,object,False,Country,UAE,
+production_requirements.csv,latitude,float64,False,Latitude,24.4539,
+production_requirements.csv,longitude,float64,False,Longitude,54.3773,
+production_requirements.csv,venue_type,object,False,Venue type,Theme Park,
+production_requirements.csv,rehearsal_start_date,object,False,Rehearsal start date,2026-10-04,ISO-8601 date with logical chronology
+production_requirements.csv,rehearsal_end_date,object,False,Rehearsal end date,2026-10-16,ISO-8601 date with logical chronology
+production_requirements.csv,technical_rehearsal_start_date,object,False,Technical rehearsal start date,2026-10-15,ISO-8601 date with logical chronology
+production_requirements.csv,technical_rehearsal_end_date,object,False,Technical rehearsal end date,2026-10-16,ISO-8601 date with logical chronology
+production_requirements.csv,performance_start_date,object,False,Performance start date,2026-10-17,ISO-8601 date with logical chronology
+production_requirements.csv,performance_end_date,object,False,Performance end date,2026-11-07,ISO-8601 date with logical chronology
+production_requirements.csv,number_of_performances,int64,False,Number of performances,44,
+production_requirements.csv,contract_duration_days,int64,False,Contract duration days,35,
+production_requirements.csv,talent_required,int64,False,Talent required,1,
+production_requirements.csv,ensemble_or_solo,object,False,Ensemble or solo,Ensemble,
+production_requirements.csv,minimum_experience_years,float64,False,Minimum experience years,3.4,
+production_requirements.csv,minimum_director_rating,float64,False,Minimum director rating,4.0,"Between 0 and 5, or null for new talent"
+production_requirements.csv,minimum_showreel_score,float64,False,Minimum showreel score,71.1,Between 0 and 100
+production_requirements.csv,minimum_audition_score,float64,False,Minimum audition score,81.1,Between 0 and 100
+production_requirements.csv,physical_skill_requirement,object,False,Physical skill requirement,Standard,
+production_requirements.csv,aquatic_experience_required,bool,False,Aquatic experience required,False,
+production_requirements.csv,aerial_experience_required,bool,False,Aerial experience required,False,
+production_requirements.csv,stunt_experience_required,bool,False,Stunt experience required,False,
+production_requirements.csv,required_safety_certifications,object,True,Required safety certifications,First Aid,
+production_requirements.csv,medical_clearance_required,bool,False,Medical clearance required,False,
+production_requirements.csv,audition_required,bool,False,Audition required,True,
+production_requirements.csv,passport_validity_months_required,int64,False,Passport validity months required,6,
+production_requirements.csv,visa_sponsorship_available,bool,False,Visa sponsorship available,True,
+production_requirements.csv,required_languages,object,False,Required languages,English|Hindi,
+production_requirements.csv,overnight_rehearsal_required,bool,False,Overnight rehearsal required,True,
+production_requirements.csv,weekly_budget_min_usd,float64,False,Weekly budget min usd,2550.0,Non-negative monetary value
+production_requirements.csv,weekly_budget_max_usd,float64,False,Weekly budget max usd,4350.0,Non-negative monetary value
+production_requirements.csv,travel_provided,bool,False,Travel provided,True,
+production_requirements.csv,accommodation_provided,bool,False,Accommodation provided,True,
+production_requirements.csv,per_diem_usd,float64,False,Per diem usd,65.0,
+production_requirements.csv,production_risk_level,object,False,Production risk level,Medium,
+production_requirements.csv,urgency_level,object,False,Urgency level,Critical,
+production_requirements.csv,booking_created_date,object,False,Booking created date,2026-07-03,ISO-8601 date with logical chronology
+production_requirements.csv,application_deadline,object,False,Application deadline,2026-07-11,
+production_requirements.csv,special_instructions,object,False,Special instructions,International travel documents must be ready before contracting.,
+production_requirements.csv,requirement_status,object,False,Requirement status,Shortlisting,
+production_credits.csv,credit_id,object,False,Unique historical production-credit identifier,CRD-00001,Unique and non-null for primary identifiers; valid foreign key where applicable
+production_credits.csv,talent_id,object,False,Unique synthetic talent identifier,TAL-0379,Unique and non-null for primary identifiers; valid foreign key where applicable
+production_credits.csv,fictional_client_id,object,False,Fictional client id,CLI-0128,Unique and non-null for primary identifiers; valid foreign key where applicable
+production_credits.csv,production_title,object,False,Production title,Progressive high-level infrastructure Ceremony,
+production_credits.csv,production_type,object,False,Production type,Urban Mega-Celebration,
+production_credits.csv,role,object,False,Role,Vocalist,
+production_credits.csv,start_date,object,False,Start date,2025-07-05,ISO-8601 date with logical chronology
+production_credits.csv,end_date,object,False,End date,2025-11-05,ISO-8601 date with logical chronology
+production_credits.csv,city,object,False,City,New York,
+production_credits.csv,country,object,False,Country,United States,
+production_credits.csv,contract_status,object,False,Contract status,Completed,
+production_credits.csv,number_of_performances,int64,False,Number of performances,12,
+production_credits.csv,contract_value_usd,float64,False,Contract value usd,70829.15,
+production_credits.csv,rehearsal_attendance_rate,float64,False,Rehearsal attendance rate,0.9144,Non-negative monetary value
+production_credits.csv,director_rating,float64,False,Director rating,4.62,"Between 0 and 5, or null for new talent"
+production_credits.csv,technical_readiness_score,float64,False,Technical readiness score,98.0,Between 0 and 100
+production_credits.csv,safety_compliance_score,float64,False,Safety compliance score,100.0,Between 0 and 100
+production_credits.csv,incident_recorded,bool,False,Incident recorded,False,
+production_credits.csv,incident_severity,object,False,Incident severity,None,
+production_credits.csv,rehire_eligible,bool,False,Rehire eligible,False,
+production_credits.csv,early_termination_party,object,True,Early termination party,Client,
+production_credits.csv,early_termination_reason,object,True,Early termination reason,Visa delay,
+production_credits.csv,skills_used,object,False,Skills used,In-Ear Monitoring|Vocal Endurance|Ensemble Performance,
+production_credits.csv,director_feedback,object,False,Director feedback,Strong rehearsal discipline and dependable show execution.,Non-negative monetary value
+talent_availability.csv,talent_id,object,False,Unique synthetic talent identifier,TAL-0001,Unique and non-null for primary identifiers; valid foreign key where applicable
+talent_availability.csv,availability_date,object,False,Availability date,2026-07-16,ISO-8601 date with logical chronology
+talent_availability.csv,availability_id,object,False,Unique daily availability identifier,AVL-TAL-0001-20260716,Unique and non-null for primary identifiers; valid foreign key where applicable
+talent_availability.csv,availability_status,object,False,Availability status,Unavailable,
+talent_availability.csv,available_from,object,False,Available from,00:00,
+talent_availability.csv,available_until,object,False,Available until,23:59,ISO-8601 date with logical chronology
+talent_availability.csv,partially_available,bool,False,Partially available,False,
+talent_availability.csv,booked_contract_reference,object,True,Booked contract reference,EXT-04927,
+talent_availability.csv,advance_notice_days,int64,False,Advance notice days,3,
+talent_availability.csv,overnight_available,bool,False,Overnight available,True,
+talent_availability.csv,last_updated_at,object,False,Last updated at,2026-07-06T17:00:00,ISO-8601 date with logical chronology
+audition_evaluations.csv,audition_id,object,False,Unique requirement-specific audition identifier,AUD-000001,Unique and non-null for primary identifiers; valid foreign key where applicable
+audition_evaluations.csv,requirement_id,object,False,Unique production requirement identifier,REQ-0001,Unique and non-null for primary identifiers; valid foreign key where applicable
+audition_evaluations.csv,talent_id,object,False,Unique synthetic talent identifier,TAL-0019,Unique and non-null for primary identifiers; valid foreign key where applicable
+audition_evaluations.csv,audition_date,object,False,Audition date,2026-07-11,ISO-8601 date with logical chronology
+audition_evaluations.csv,audition_format,object,False,Audition format,In Person,
+audition_evaluations.csv,technical_score,float64,False,Technical score,74.7,Between 0 and 100
+audition_evaluations.csv,artistic_score,float64,False,Artistic score,93.5,Between 0 and 100
+audition_evaluations.csv,response_to_direction_score,float64,False,Response to direction score,87.0,Between 0 and 100
+audition_evaluations.csv,safety_awareness_score,float64,False,Safety awareness score,81.1,Between 0 and 100
+audition_evaluations.csv,panel_score,float64,False,Panel score,84.2,Between 0 and 100
+audition_evaluations.csv,audition_outcome,object,False,Audition outcome,Pass,
+audition_evaluations.csv,panel_notes,object,False,Panel notes,Strong fit for the production vocabulary.,
+match_ground_truth.csv,match_id,object,False,Unique talent-to-requirement evaluation identifier,MAT-000001,Unique and non-null for primary identifiers; valid foreign key where applicable
+match_ground_truth.csv,requirement_id,object,False,Unique production requirement identifier,REQ-0001,Unique and non-null for primary identifiers; valid foreign key where applicable
+match_ground_truth.csv,talent_id,object,False,Unique synthetic talent identifier,TAL-0019,Unique and non-null for primary identifiers; valid foreign key where applicable
+match_ground_truth.csv,role_eligible,bool,False,Role eligible,True,
+match_ground_truth.csv,mandatory_skills_met,bool,False,Mandatory skills met,False,
+match_ground_truth.csv,full_contract_availability_met,bool,False,Full contract availability met,False,
+match_ground_truth.csv,audition_met,bool,False,Audition met,True,
+match_ground_truth.csv,physical_technical_eligible,bool,False,Physical technical eligible,True,
+match_ground_truth.csv,mobility_work_authorization_eligible,bool,False,Mobility work authorization eligible,True,
+match_ground_truth.csv,safety_certification_eligible,bool,False,Safety certification eligible,True,
+match_ground_truth.csv,medical_clearance_eligible,bool,False,Medical clearance eligible,True,
+match_ground_truth.csv,language_eligible,bool,False,Language eligible,False,
+match_ground_truth.csv,overnight_rehearsal_eligible,bool,False,Overnight rehearsal eligible,True,
+match_ground_truth.csv,profile_active,bool,False,Profile active,True,
+match_ground_truth.csv,verification_eligible,bool,False,Verification eligible,True,
+match_ground_truth.csv,budget_eligible,bool,False,Budget eligible,True,Non-negative monetary value
+match_ground_truth.csv,experience_eligible,bool,False,Experience eligible,True,
+match_ground_truth.csv,rating_eligible,bool,False,Rating eligible,True,"Between 0 and 5, or null for new talent"
+match_ground_truth.csv,skill_score,float64,False,Skill score,19.5,Between 0 and 100
+match_ground_truth.csv,production_credit_score,float64,False,Production credit score,23.0,Between 0 and 100
+match_ground_truth.csv,availability_score,float64,False,Availability score,48.57,Between 0 and 100
+match_ground_truth.csv,audition_showreel_score,float64,False,Audition showreel score,85.45,Between 0 and 100
+match_ground_truth.csv,physical_technical_score,float64,False,Physical technical score,100.0,Between 0 and 100
+match_ground_truth.csv,mobility_score,float64,False,Mobility score,92.0,Between 0 and 100
+match_ground_truth.csv,reliability_score,float64,False,Reliability score,78.72,Between 0 and 100
+match_ground_truth.csv,safety_compliance_score,float64,False,Safety compliance score,96.0,Between 0 and 100
+match_ground_truth.csv,budget_score,float64,False,Budget score,86.81,Between 0 and 100
+match_ground_truth.csv,language_cultural_score,float64,False,Language cultural score,40.0,Between 0 and 100
+match_ground_truth.csv,final_match_score,float64,False,Explainable weighted score from 0 to 100; hard constraints remain decisive,55.23,Between 0 and 100
+match_ground_truth.csv,eligibility_status,object,False,Eligibility status,Not Eligible,
+match_ground_truth.csv,match_category,object,False,Match category,Not Eligible,
+match_ground_truth.csv,positive_match_reasons,object,True,Positive match reasons,Eligible for the required Musician discipline|Meets audition and showreel thresholds|Meets physical and technical suitability requirements|Travel and work eligibility is feasible for UAE|Required safety credentials and medical clearance are satisfied,
+match_ground_truth.csv,risk_factors,object,True,Risk factors,Historical cancellation rate is above the preferred threshold,
+match_ground_truth.csv,rejection_reason,object,True,Rejection reason,Missing mandatory production skill; Not fully available for the contract window; Required language not supported,
+match_ground_truth.csv,distance_km,float64,False,Distance km,4966.2,
+match_ground_truth.csv,audition_score,float64,True,Audition score,84.2,Between 0 and 100
+match_ground_truth.csv,recommended,bool,False,"True only for eligible candidates scoring at least 70, with a maximum of five per requirement",False,
+match_ground_truth.csv,recommendation_rank,float64,True,Recommendation rank,3.0,
+match_ground_truth.csv,ground_truth_label,object,False,Ground truth label,Hard Rejection,
+edge_case_manifest.csv,edge_case_id,object,False,Edge case id,EDGE-01,Unique and non-null for primary identifiers; valid foreign key where applicable
+edge_case_manifest.csv,edge_case_name,object,False,Edge case name,Perfect skill match but unavailable,
+edge_case_manifest.csv,description,object,False,Description,All mandatory skills are present but full contract availability fails,
+edge_case_manifest.csv,requirement_id,object,False,Unique production requirement identifier,REQ-0001,Unique and non-null for primary identifiers; valid foreign key where applicable
+edge_case_manifest.csv,talent_id,object,False,Unique synthetic talent identifier,TAL-0471,Unique and non-null for primary identifiers; valid foreign key where applicable
+edge_case_manifest.csv,match_id,object,False,Unique talent-to-requirement evaluation identifier,MAT-000023,Unique and non-null for primary identifiers; valid foreign key where applicable
+edge_case_manifest.csv,observed_match_category,object,False,Observed match category,Not Eligible,
+edge_case_manifest.csv,observed_rejection_reason,object,True,Observed rejection reason,Not fully available for the contract window; Required language not supported,
+edge_case_manifest.csv,expected_system_behaviour,object,False,Expected system behaviour,"Apply hard constraints first, retain explainable scores, and surface precise reasons or risks.",
