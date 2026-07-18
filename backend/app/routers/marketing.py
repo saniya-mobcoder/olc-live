@@ -1,21 +1,18 @@
-"""Marketing draft generation (draft-only, no publish)."""
+"""Marketing draft generation (draft-only, no publish) — cheap_chat tier."""
 from __future__ import annotations
 
 from datetime import datetime
 
-import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from ..config import get_settings
+from ..ai.providers import AIConfigError, TaskTier, chat
 from ..database import get_db
-from ..embeddings import OpenAIConfigError, require_api_key
 from ..engine.matcher import serialize_run
 from ..models import Booking, MarketingDraft, MatchRun, Requirement, Talent
 from ..schemas import MarketingDraftOut, MarketingDraftRequest
 
 router = APIRouter(prefix="/marketing", tags=["marketing"])
-settings = get_settings()
 
 
 def _next_draft_id(db: Session) -> str:
@@ -78,37 +75,30 @@ def _offline_draft(channel: str, facts: dict) -> str:
 
 
 def _llm_draft(channel: str, facts: dict) -> str:
-    api_key = require_api_key()
     style = (
         "Write a short LinkedIn post (under 120 words)."
         if channel == "linkedin"
         else "Write a short newsletter blurb (under 150 words)."
     )
-    resp = httpx.post(
-        "https://api.openai.com/v1/chat/completions",
-        headers={"Authorization": f"Bearer {api_key}"},
-        json={
-            "model": settings.openai_chat_model,
-            "temperature": 0.4,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": (
-                        "You draft marketing copy for OLC live-production casting. "
-                        "Use only provided facts. No false claims. Draft only."
-                    ),
-                },
-                {
-                    "role": "user",
-                    "content": f"{style}\n\nFACTS:\n{facts}",
-                },
-            ],
-        },
-        timeout=60.0,
+    result = chat(
+        [
+            {
+                "role": "system",
+                "content": (
+                    "You draft marketing copy for OLC live-production casting. "
+                    "Use only provided facts. No false claims. Draft only."
+                ),
+            },
+            {
+                "role": "user",
+                "content": f"{style}\n\nFACTS:\n{facts}",
+            },
+        ],
+        tier=TaskTier.CHEAP_CHAT,
+        temperature=0.4,
+        max_tokens=280,
     )
-    if resp.status_code >= 400:
-        raise RuntimeError(f"OpenAI draft failed: {resp.status_code}")
-    return resp.json()["choices"][0]["message"]["content"].strip()
+    return result.content.strip()
 
 
 @router.post("/draft", response_model=MarketingDraftOut)
@@ -134,7 +124,7 @@ def create_draft(body: MarketingDraftRequest, db: Session = Depends(get_db)):
 
     try:
         text = _llm_draft(channel, facts)
-    except (OpenAIConfigError, Exception):
+    except (AIConfigError, Exception):
         text = _offline_draft(channel, facts)
 
     row = MarketingDraft(

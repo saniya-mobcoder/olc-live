@@ -1,19 +1,19 @@
-"""Talent pool analytics."""
+"""Talent pool analytics + optional insight narrative (F18)."""
 from collections import defaultdict
 from datetime import date
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from ..ai.narrate import narrate
 from ..database import get_db
 from ..models import Talent, TalentAvailability
-from ..schemas import PoolAnalyticsOut
+from ..schemas import NarrativeOut, PoolAnalyticsOut
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 
-@router.get("/pool", response_model=PoolAnalyticsOut)
-def pool_analytics(db: Session = Depends(get_db), month: str = "2026-10"):
+def _compute_pool(db: Session, month: str) -> PoolAnalyticsOut:
     talents = db.query(Talent).all()
     by_region: dict[str, int] = defaultdict(int)
     by_role: dict[str, int] = defaultdict(int)
@@ -69,8 +69,39 @@ def pool_analytics(db: Session = Depends(get_db), month: str = "2026-10"):
             ),
             "avg_director_rating": round(
                 sum(t.average_director_rating or 0 for t in talents)
-                / max(1, sum(1 for t in talents if t.average_director_rating is not None)),
+                / max(
+                    1,
+                    sum(1 for t in talents if t.average_director_rating is not None),
+                ),
                 2,
             ),
         },
+    )
+
+
+@router.get("/pool", response_model=PoolAnalyticsOut)
+def pool_analytics(db: Session = Depends(get_db), month: str = "2026-10"):
+    return _compute_pool(db, month)
+
+
+@router.post("/pool/narrative", response_model=NarrativeOut)
+def pool_narrative(db: Session = Depends(get_db), month: str = "2026-10"):
+    pool = _compute_pool(db, month)
+    result = narrate(
+        {
+            "month": month,
+            "total_talents": pool.totals.get("talent_count"),
+            "gaps": pool.gaps[:8],
+            "by_region": pool.by_region[:10],
+            "totals": pool.totals,
+        },
+        kind="pool",
+        client_facing=False,
+    )
+    return NarrativeOut(
+        narrative=result["narrative"],
+        provider=result.get("provider"),
+        model=result.get("model"),
+        cost_usd=result.get("cost_usd"),
+        used_llm=bool(result.get("used_llm")),
     )

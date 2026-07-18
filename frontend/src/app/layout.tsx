@@ -5,18 +5,18 @@ import "./globals.css";
 const display = Fraunces({
   subsets: ["latin"],
   variable: "--font-display",
-  weight: ["500", "600", "700"],
+  weight: ["500", "600", "700", "900"],
 });
 
 const body = Source_Sans_3({
   subsets: ["latin"],
   variable: "--font-body",
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "OLC Talent Matching",
-  description: "Explainable talent shortlisting for live productions",
+  title: "Spotlight — Live Talent Intelligence by OLC",
+  description: "Cast the impossible. AI-powered, explainable talent matching for live spectacle.",
 };
 
 export default function RootLayout({

@@ -23,7 +23,7 @@ export function TalentMap({
   const center: [number, number] = [requirement.latitude, requirement.longitude];
 
   return (
-    <div className="h-72 w-full overflow-hidden border border-[var(--olc-ink)]/10">
+    <div className="h-72 w-full overflow-hidden rounded-xl border border-line">
       <MapContainer center={center} zoom={7} scrollWheelZoom={false} style={{ height: "100%", width: "100%" }}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'

@@ -26,14 +26,11 @@ def setup_db():
 
 @pytest.fixture()
 def client(monkeypatch):
-    def _no_key():
+    def _boom(*_a, **_k):
         raise OpenAIConfigError("no key")
 
-    monkeypatch.setattr("app.routers.copilot.require_api_key", _no_key)
-    monkeypatch.setattr(
-        "app.routers.copilot.embed_text",
-        lambda *_a, **_k: (_ for _ in ()).throw(OpenAIConfigError("no key")),
-    )
+    monkeypatch.setattr("app.ai.agent.chat", _boom)
+    monkeypatch.setattr("app.routers.copilot.embed_text", _boom)
     with TestClient(app) as c:
         yield c
 

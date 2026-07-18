@@ -8,7 +8,7 @@ Explainable talent matching for live productions — features **F01–F20**, plu
 - **Database:** **local SQLite** (`backend/olc.db`) — no Docker
 - **Vectors:** OpenAI embeddings stored as JSON on each talent (in-process cosine search)
 - **Frontend:** Next.js 15 + TypeScript + Tailwind
-- **AI:** OpenAI only (`text-embedding-3-small` + `gpt-4o-mini`)
+- **AI:** OpenAI embeddings only; **Groq free Llama 3.3 70B** for all chat (explain, copilot, jobs, marketing). Optional OpenAI/xAI failover.
 
 ## Quick start
 
@@ -19,7 +19,9 @@ cd backend
 python -m venv .venv
 .\.venv\Scripts\activate
 pip install -r requirements.txt
-# Ensure backend/.env has OPENAI_API_KEY=sk-...
+# Ensure backend/.env has:
+#   OPENAI_API_KEY=...   (embeddings)
+#   GROQ_API_KEY=...     (free Llama 70B chat)
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -68,10 +70,12 @@ API: `POST /api/stagelync/sync` → `GET /api/stagelync/discover?q=` → `POST /
 | Concern | Choice |
 |--------|--------|
 | Primary store | Local SQLite file |
-| Semantic search | OpenAI embed + cosine over stored vectors |
-| Copilot | OpenAI chat grounded on match results |
+| Semantic search | Hybrid BM25 + OpenAI embed + cosine (RRF) |
+| Chat (explain / copilot / jobs / marketing) | Groq `llama-3.3-70b-versatile` (free tier) |
+| Failover | OpenAI mini → optional Grok if Groq fails |
+| Predictive signals | Local heuristics (no API cost) |
 | Docker | Not required |
 | StageLync | Local fixture only (no live API/OAuth) |
-| Reports | On-demand PDF/Excel packs (no email cron) |
+| Reports | On-demand PDF/Excel packs + optional AI narrative |
 
 Optional later: set `DATABASE_URL=postgresql+psycopg://...` for Postgres + pgvector.

@@ -71,6 +71,15 @@ export type MatchResult = {
     feedback_prior?: number;
     ranking_mode?: string;
     hybrid_score?: number;
+    advisory_score?: number;
+    booking_success_prior?: number;
+    rerank_reason?: string;
+    ml_signals?: {
+      no_show_risk?: number;
+      no_show_label?: string;
+      fair_weekly_rate_usd?: number;
+      rate_vs_fair?: string | null;
+    };
   };
   failed_gates: string[];
   positive_reasons: string[];
@@ -175,6 +184,11 @@ export type ExecutiveReport = {
       avg_weekly_budget_max_usd?: number;
       avg_talent_weekly_rate_usd?: number;
       budget_vs_rate_delta_usd?: number;
+    };
+    narrative?: {
+      narrative?: string;
+      provider?: string;
+      used_llm?: boolean;
     };
   };
 };

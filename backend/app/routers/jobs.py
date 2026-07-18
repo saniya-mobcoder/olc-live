@@ -6,13 +6,12 @@ import re
 from datetime import date, datetime, timedelta
 from typing import Any
 
-import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from ..config import get_settings
+from ..ai.providers import AIConfigError, TaskTier, chat
 from ..database import get_db
-from ..embeddings import OpenAIConfigError, cosine_similarity, embed_text, require_api_key
+from ..embeddings import OpenAIConfigError, cosine_similarity, embed_text
 from ..models import Requirement
 from ..schemas import (
     JobConfirmRequest,
@@ -24,7 +23,6 @@ from ..schemas import (
 )
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
-settings = get_settings()
 
 _CITY_COORDS: dict[str, tuple[float, float, str]] = {
     "dubai": (25.2048, 55.2708, "UAE"),
@@ -163,7 +161,6 @@ def _offline_parse(brief: str) -> dict[str, Any]:
 
 
 def _llm_parse(brief: str) -> dict[str, Any]:
-    api_key = require_api_key()
     system = (
         "Extract a live-production casting requirement as JSON. "
         "Use only these keys when known: production_title, production_type, "
@@ -178,24 +175,17 @@ def _llm_parse(brief: str) -> dict[str, Any]:
         "required_category one of Performer, Creative, Technical, Production. "
         "Return JSON only."
     )
-    resp = httpx.post(
-        "https://api.openai.com/v1/chat/completions",
-        headers={"Authorization": f"Bearer {api_key}"},
-        json={
-            "model": settings.openai_chat_model,
-            "temperature": 0.1,
-            "response_format": {"type": "json_object"},
-            "messages": [
-                {"role": "system", "content": system},
-                {"role": "user", "content": brief[:6000]},
-            ],
-        },
-        timeout=60.0,
+    result = chat(
+        [
+            {"role": "system", "content": system},
+            {"role": "user", "content": brief[:6000]},
+        ],
+        tier=TaskTier.CHEAP_CHAT,
+        temperature=0.1,
+        max_tokens=900,
+        response_format={"type": "json_object"},
     )
-    if resp.status_code >= 400:
-        raise RuntimeError(f"OpenAI parse failed: {resp.status_code} {resp.text}")
-    content = resp.json()["choices"][0]["message"]["content"]
-    data = json.loads(content)
+    data = json.loads(result.content)
     if not isinstance(data, dict):
         raise RuntimeError("Parse did not return an object")
     return data
@@ -256,7 +246,7 @@ def parse_job(body: JobParseRequest):
     try:
         fields = _llm_parse(brief)
         used_llm = True
-    except (OpenAIConfigError, Exception):
+    except (OpenAIConfigError, AIConfigError, Exception):
         fields = _offline_parse(brief)
 
     # Enrich city coords if missing
@@ -270,7 +260,7 @@ def parse_job(body: JobParseRequest):
     fields.setdefault("special_instructions", brief[:2000])
     warnings, missing = _assess_fields(fields)
     if not used_llm:
-        warnings.append("Parsed offline (no OpenAI key or LLM failed)")
+        warnings.append("Parsed offline (no API key or LLM failed)")
 
     return JobParseOut(fields=fields, warnings=warnings, missing_fields=missing)
 

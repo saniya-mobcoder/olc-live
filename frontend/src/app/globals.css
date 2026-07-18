@@ -2,17 +2,62 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================================
+   SPOTLIGHT — by Our Legacy Creations
+   Live Talent Intelligence · vibrant stage-light theme
+   Midnight base · magenta → violet → cyan spotlight gradients · neon status
+   ========================================================================== */
+
 :root {
-  --olc-ink: #10231c;
-  --olc-forest: #0b3d2e;
-  --olc-leaf: #1f6b4f;
-  --olc-mint: #d7ebe2;
-  --olc-sand: #e7d7b8;
-  --olc-coral: #c45c3e;
-  --olc-paper: #f3efe6;
-  --olc-glow: #f7f1e4;
-  --background: var(--olc-paper);
-  --foreground: var(--olc-ink);
+  /* --- Midnight stage base --------------------------------------------- */
+  --bg: #070824;
+  --bg-2: #0b0d34;
+  --surface: rgba(255, 255, 255, 0.05);   /* glass card */
+  --surface-solid: #14163f;
+  --surface-muted: rgba(255, 255, 255, 0.03);
+  --line: rgba(255, 255, 255, 0.10);
+  --line-strong: rgba(255, 255, 255, 0.20);
+
+  /* --- Text (lavender-tinted for depth) -------------------------------- */
+  --ink: #ffffff;
+  --ink-soft: #c9cbf0;
+  --ink-muted: #8b8fc4;
+
+  /* --- Vibrant stage lights -------------------------------------------- */
+  --magenta: #ff2e93;
+  --violet: #8b5cf6;
+  --cyan: #22d3ee;
+  --amber: #ffb020;
+  --coral: #ff6a3d;
+  --lime: #34e0a1;
+
+  /* --- Semantic (neon on dark) ----------------------------------------- */
+  --success: #2de0a6;
+  --success-bg: rgba(45, 224, 166, 0.14);
+  --success-fg: #7ff2cf;
+  --warning: #ffbe3d;
+  --warning-bg: rgba(255, 190, 61, 0.14);
+  --warning-fg: #ffd98a;
+  --danger: #ff4d6d;
+  --danger-bg: rgba(255, 77, 109, 0.16);
+  --danger-fg: #ff9fb2;
+  --info: #38bdf8;
+  --info-bg: rgba(56, 189, 248, 0.14);
+  --info-fg: #9bdcff;
+
+  /* --- Signature gradients --------------------------------------------- */
+  --grad-spotlight: linear-gradient(120deg, #ff2e93 0%, #8b5cf6 48%, #22d3ee 100%);
+  --grad-warm: linear-gradient(120deg, #ff6a3d 0%, #ffb020 100%);
+
+  /* --- Elevation & glow ------------------------------------------------- */
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.35), 0 24px 60px -28px rgba(0, 0, 0, 0.7);
+  --shadow-elevated: 0 6px 18px rgba(0, 0, 0, 0.45), 0 40px 80px -32px rgba(0, 0, 0, 0.8);
+  --glow-magenta: 0 10px 40px -8px rgba(255, 46, 147, 0.55);
+  --glow-violet: 0 10px 40px -8px rgba(139, 92, 246, 0.55);
+  --glow-cyan: 0 10px 40px -8px rgba(34, 211, 238, 0.5);
+
+  --background: var(--bg);
+  --foreground: var(--ink);
 }
 
 html,
@@ -21,100 +66,166 @@ body {
 }
 
 body {
-  color: var(--foreground);
-  background:
-    radial-gradient(ellipse 80% 50% at 10% -10%, #cfe4d8 0%, transparent 55%),
-    radial-gradient(ellipse 60% 40% at 90% 0%, #e8d9b5 0%, transparent 50%),
-    linear-gradient(180deg, #f7f3ea 0%, #ebe4d6 40%, #e2ebe6 100%);
-  font-family: var(--font-body), Georgia, serif;
+  color: var(--ink-soft);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(ellipse 45% 40% at 8% -6%, rgba(255, 46, 147, 0.22) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 45% at 98% 2%, rgba(34, 211, 238, 0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 55% at 50% 108%, rgba(139, 92, 246, 0.22) 0%, transparent 60%),
+    linear-gradient(180deg, #070824 0%, #0a0b2e 40%, #070824 100%);
+  background-attachment: fixed;
+  font-family: var(--font-body), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 h1,
 h2,
 h3,
-.brand {
+h4,
+.brand,
+.font-display {
   font-family: var(--font-display), Georgia, serif;
+  color: var(--ink);
+  letter-spacing: -0.015em;
 }
 
+::selection {
+  background: var(--magenta);
+  color: #fff;
+}
+
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* --- Utility: gradient text + surfaces -------------------------------- */
+.text-gradient {
+  background: var(--grad-spotlight);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.bg-spotlight {
+  background: var(--grad-spotlight);
+}
+
+.bg-warm {
+  background: var(--grad-warm);
+}
+
+.glass {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.card-surface {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(14px);
+}
+
+.hairline {
+  border-color: var(--line);
+}
+
+/* ============================================================================
+   Legacy classes — re-themed to vibrant dark so existing screens stay usable
+   ========================================================================== */
 .panel {
-  background: rgba(255, 252, 246, 0.78);
-  border: 1px solid rgba(16, 35, 28, 0.08);
-  backdrop-filter: blur(8px);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(14px);
 }
 
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 600;
   letter-spacing: 0.02em;
-  padding: 0.2rem 0.55rem;
-  border: 1px solid rgba(16, 35, 28, 0.15);
+  padding: 0.22rem 0.6rem;
+  border-radius: 9999px;
+  border: 1px solid transparent;
 }
 
 .badge-ready {
-  background: #d7ebe2;
-  color: #0b3d2e;
+  background: var(--success-bg);
+  color: var(--success-fg);
+  border-color: var(--success);
 }
 
 .badge-risk {
-  background: #f3d6cd;
-  color: #8a2f1a;
+  background: var(--danger-bg);
+  color: var(--danger-fg);
+  border-color: var(--danger);
 }
 
 .badge-budget {
-  background: #e7d7b8;
-  color: #4a3a1f;
+  background: var(--warning-bg);
+  color: var(--warning-fg);
+  border-color: var(--warning);
 }
 
 .score-bar {
-  height: 0.45rem;
-  background: rgba(16, 35, 28, 0.08);
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.10);
   overflow: hidden;
 }
 
 .score-bar > span {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, #0b3d2e, #2f8f6b);
+  border-radius: 9999px;
+  background: var(--grad-spotlight);
 }
 
+/* ============================================================================
+   Motion
+   ========================================================================== */
 @keyframes rise-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes pulse-soft {
-  0%,
-  100% {
-    opacity: 0.55;
-  }
-  50% {
-    opacity: 1;
-  }
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
 }
 
-.animate-rise {
-  animation: rise-in 0.55s ease-out both;
+@keyframes glow-drift {
+  0%, 100% { transform: translate3d(0, 0, 0); opacity: 0.9; }
+  50% { transform: translate3d(0, -12px, 0); opacity: 1; }
 }
 
-.animate-rise-delay {
-  animation: rise-in 0.7s ease-out 0.12s both;
-}
-
-.animate-pulse-soft {
-  animation: pulse-soft 2.8s ease-in-out infinite;
-}
+.animate-rise { animation: rise-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-rise-delay { animation: rise-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both; }
+.animate-pulse-soft { animation: pulse-soft 2.8s ease-in-out infinite; }
+.animate-glow { animation: glow-drift 7s ease-in-out infinite; }
 
 .leaflet-container {
   width: 100%;
   height: 100%;
-  border-radius: 0;
+  border-radius: 16px;
   font: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise,
+  .animate-rise-delay,
+  .animate-pulse-soft,
+  .animate-glow {
+    animation: none;
+  }
 }

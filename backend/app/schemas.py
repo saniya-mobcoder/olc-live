@@ -170,6 +170,7 @@ class MatchRequest(BaseModel):
     scenario_label: str = "baseline"
     params_override: dict[str, Any] = Field(default_factory=dict)
     ranking_mode: str = "rules_only"  # rules_only | hybrid
+    include_ml_signals: bool = False
 
 
 class MatchDecisionRequest(BaseModel):
@@ -224,6 +225,15 @@ class WhatIfOut(BaseModel):
     lost_talent_ids: list[str]
 
 
+class WhatIfSuggestOut(BaseModel):
+    requirement_id: str
+    scenarios: list[dict[str, Any]] = Field(default_factory=list)
+    provider: str | None = None
+    model: str | None = None
+    cost_usd: float | None = None
+    used_llm: bool = False
+
+
 class SearchRequest(BaseModel):
     query: str
     limit: int = 20
@@ -240,6 +250,52 @@ class CopilotRequest(BaseModel):
 class CopilotResponse(BaseModel):
     reply: str
     sources: list[str] = Field(default_factory=list)
+    provider: str | None = None
+    model: str | None = None
+    tier: str | None = None
+    cost_usd: float | None = None
+
+
+class ExplainRequest(BaseModel):
+    match_run_id: str
+    talent_id: str
+
+
+class ExplainOut(BaseModel):
+    match_run_id: str
+    talent_id: str
+    explanation: str
+    provider: str | None = None
+    model: str | None = None
+    cost_usd: float | None = None
+    grounded: bool = True
+    used_llm: bool = False
+
+
+class PredictSignalsOut(BaseModel):
+    talent_id: str
+    match_run_id: str
+    no_show_risk: float
+    no_show_label: str
+    fair_weekly_rate_usd: float
+    rate_vs_fair: str | None = None
+    source: str = "local_heuristic"
+
+
+class AiCostSummaryOut(BaseModel):
+    call_count: int
+    total_cost_usd: float
+    by_provider: dict[str, float] = Field(default_factory=dict)
+    by_tier: dict[str, float] = Field(default_factory=dict)
+    recent: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class NarrativeOut(BaseModel):
+    narrative: str
+    provider: str | None = None
+    model: str | None = None
+    cost_usd: float | None = None
+    used_llm: bool = False
 
 
 class JobParseRequest(BaseModel):
@@ -327,6 +383,7 @@ class ExecutiveReportRequest(BaseModel):
     period_start: date
     period_end: date
     scenario_label: str = "monthly"
+    include_narrative: bool = False
 
 
 class ExecutiveReportOut(BaseModel):

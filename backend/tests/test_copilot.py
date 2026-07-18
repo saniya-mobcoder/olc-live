@@ -31,7 +31,14 @@ def client(monkeypatch):
     def _no_key():
         raise OpenAIConfigError("no key in tests")
 
-    monkeypatch.setattr("app.routers.copilot.require_api_key", _no_key)
+    monkeypatch.setattr(
+        "app.ai.agent.chat",
+        lambda *a, **k: (_ for _ in ()).throw(OpenAIConfigError("no key in tests")),
+    )
+    monkeypatch.setattr(
+        "app.routers.copilot.embed_text",
+        lambda *_a, **_k: (_ for _ in ()).throw(OpenAIConfigError("no key in tests")),
+    )
     with TestClient(app) as c:
         yield c
 

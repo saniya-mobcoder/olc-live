@@ -1,23 +1,21 @@
-"""Conversational producer copilot -- match-grounded or FAQ support mode."""
+"""Conversational producer copilot -- match-grounded or FAQ support mode (tiered)."""
 from __future__ import annotations
 
 import json
 import re
 from pathlib import Path
 
-import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from ..config import get_settings
+from ..ai.agent import run_copilot_chat
 from ..database import get_db
-from ..embeddings import OpenAIConfigError, cosine_similarity, embed_text, require_api_key
+from ..embeddings import OpenAIConfigError, cosine_similarity, embed_text
 from ..engine.matcher import serialize_run
 from ..models import MatchRun, Talent
 from ..schemas import CopilotRequest, CopilotResponse
 
 router = APIRouter(prefix="/copilot", tags=["copilot"])
-settings = get_settings()
 
 _TALENT_ID_RE = re.compile(r"(TAL-\d+)", re.I)
 _FAQ_DIR = Path(__file__).resolve().parents[3] / "data" / "faq"
@@ -156,7 +154,7 @@ def _gather_match_context(db: Session, body: CopilotRequest) -> tuple[str, list[
 
 def _offline_match_reply(context: str, message: str, sources: list[str]) -> str:
     lines = [
-        "Offline copilot (no OPENAI_API_KEY) — answer grounded on match context only.",
+        "Offline copilot (no API keys) — answer grounded on match context only.",
         f"Question: {message}",
         "",
     ]
@@ -196,7 +194,6 @@ def _offline_match_reply(context: str, message: str, sources: list[str]) -> str:
 
 
 def _offline_support_reply(context: str, message: str, sources: list[str]) -> str:
-    # Use first FAQ chunk body as answer
     body = context
     if "SOURCE " in context:
         first = context.split("SOURCE ", 1)[1]
@@ -210,7 +207,7 @@ def _offline_support_reply(context: str, message: str, sources: list[str]) -> st
 
 
 @router.post("/chat", response_model=CopilotResponse)
-def chat(body: CopilotRequest, db: Session = Depends(get_db)):
+def chat_endpoint(body: CopilotRequest, db: Session = Depends(get_db)):
     mode = (body.mode or "match").strip().lower()
     if mode not in ("match", "support"):
         raise HTTPException(status_code=400, detail="mode must be match or support")
@@ -234,32 +231,24 @@ def chat(body: CopilotRequest, db: Session = Depends(get_db)):
         )
         offline = _offline_match_reply
 
-    try:
-        api_key = require_api_key()
-    except OpenAIConfigError:
+    outcome = run_copilot_chat(
+        system=system, context=context, message=body.message, mode=mode
+    )
+    if not outcome.get("used_llm") or not outcome.get("reply"):
         return CopilotResponse(
             reply=offline(context, body.message, sources),
             sources=sources,
+            provider="template",
+            model="none",
+            tier=outcome.get("tier"),
+            cost_usd=0.0,
         )
 
-    user_content = f"CONTEXT:\n{context}\n\nPRODUCER QUESTION:\n{body.message}"
-    resp = httpx.post(
-        "https://api.openai.com/v1/chat/completions",
-        headers={"Authorization": f"Bearer {api_key}"},
-        json={
-            "model": settings.openai_chat_model,
-            "temperature": 0.2,
-            "messages": [
-                {"role": "system", "content": system},
-                {"role": "user", "content": user_content},
-            ],
-        },
-        timeout=60.0,
+    return CopilotResponse(
+        reply=outcome["reply"],
+        sources=sources,
+        provider=outcome.get("provider"),
+        model=outcome.get("model"),
+        tier=outcome.get("tier"),
+        cost_usd=outcome.get("cost_usd"),
     )
-    if resp.status_code >= 400:
-        raise HTTPException(
-            status_code=502,
-            detail=f"OpenAI chat failed: {resp.status_code} {resp.text}",
-        )
-    reply = resp.json()["choices"][0]["message"]["content"]
-    return CopilotResponse(reply=reply, sources=sources)

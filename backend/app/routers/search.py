@@ -1,4 +1,4 @@
-"""Natural language talent search -- pgvector semantic + keyword filter hybrid."""
+"""Natural language talent search -- hybrid BM25 + vector (F13)."""
 from __future__ import annotations
 
 import re
@@ -7,8 +7,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from ..ai.retrieval import hybrid_rank
 from ..database import IS_POSTGRES, get_db
-from ..embeddings import OpenAIConfigError, cosine_similarity, embed_text
+from ..embeddings import OpenAIConfigError, cosine_similarity, embed_text, talent_document
 from ..engine.matcher import score_talent_against_requirement
 from ..models import Talent
 from ..schemas import ScoreAgainstOut, ScoreAgainstRequest, SearchRequest, TalentOut
@@ -83,14 +84,15 @@ def _filter_boost(talent: Talent, filters: dict, query: str) -> float:
 @router.post("/talents", response_model=list[TalentOut])
 def search_talents(body: SearchRequest, db: Session = Depends(get_db)):
     filters = parse_query(body.query)
+    query_vec = None
     try:
         query_vec = embed_text(body.query)
-    except OpenAIConfigError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except OpenAIConfigError:
+        query_vec = None
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"OpenAI embed failed: {exc}") from exc
+        raise HTTPException(status_code=502, detail=f"Embed failed: {exc}") from exc
 
-    if IS_POSTGRES:
+    if IS_POSTGRES and query_vec is not None:
         vec_literal = "[" + ",".join(str(float(x)) for x in query_vec) + "]"
         rows = db.execute(
             text(
@@ -102,7 +104,7 @@ def search_talents(body: SearchRequest, db: Session = Depends(get_db)):
                 LIMIT :lim
                 """
             ),
-            {"qvec": vec_literal, "lim": max(body.limit * 3, 30)},
+            {"qvec": vec_literal, "lim": max(body.limit * 5, 50)},
         ).fetchall()
         id_to_sim = {r.talent_id: 1.0 - float(r.distance) for r in rows}
         talents = (
@@ -115,16 +117,43 @@ def search_talents(body: SearchRequest, db: Session = Depends(get_db)):
         id_to_sim = {
             t.talent_id: cosine_similarity(query_vec, t.embedding or [])
             for t in talents
-            if t.embedding
+            if t.embedding and query_vec is not None
         }
 
+    # Hybrid BM25 + vector RRF
+    items = [
+        {
+            "id": t.talent_id,
+            "text": talent_document(t),
+            "vector": t.embedding,
+            "talent": t,
+        }
+        for t in talents
+    ]
+    fused = hybrid_rank(
+        body.query,
+        items,
+        query_vector=query_vec,
+        limit=max(body.limit * 3, 30),
+    )
+    by_id = {t.talent_id: t for t in talents}
     scored: list[tuple[float, Talent]] = []
-    for t in talents:
-        semantic = id_to_sim.get(t.talent_id, 0.0)
+    for tid, rrf in fused:
+        t = by_id.get(tid)
+        if not t:
+            continue
         boost = _filter_boost(t, filters, body.query)
-        total = semantic * 10.0 + boost
-        if total > 0:
+        semantic = id_to_sim.get(tid, 0.0)
+        total = rrf * 20.0 + semantic * 5.0 + boost
+        if total > 0 or boost > 0:
             scored.append((total, t))
+
+    # If hybrid empty (no embeddings), fall back to keyword boost only
+    if not scored:
+        for t in talents:
+            boost = _filter_boost(t, filters, body.query)
+            if boost > 0:
+                scored.append((boost, t))
 
     scored.sort(key=lambda x: (-x[0], x[1].talent_id))
     return [TalentOut.model_validate(t) for _, t in scored[: body.limit]]

@@ -14,6 +14,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 from sqlalchemy.orm import Session
 
+from ..ai.narrate import narrate
 from ..database import get_db
 from ..models import (
     ExecutiveReport,
@@ -24,7 +25,7 @@ from ..models import (
     Requirement,
     Talent,
 )
-from ..schemas import ExecutiveReportOut, ExecutiveReportRequest
+from ..schemas import ExecutiveReportOut, ExecutiveReportRequest, NarrativeOut
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
@@ -187,6 +188,21 @@ def generate_executive_report(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+    if body.include_narrative:
+        narr = narrate(
+            {
+                "period_start": body.period_start.isoformat(),
+                "period_end": body.period_end.isoformat(),
+                "kpis": payload,
+                "top_gate_fails": (payload.get("operational") or {}).get(
+                    "gate_fail_frequency", []
+                )[:5],
+            },
+            kind="report",
+            client_facing=True,
+        )
+        payload = {**payload, "narrative": narr}
+
     report = ExecutiveReport(
         id=_next_report_id(db),
         period_start=body.period_start,
@@ -199,6 +215,35 @@ def generate_executive_report(
     db.commit()
     db.refresh(report)
     return report
+
+
+@router.post("/{report_id}/narrate", response_model=NarrativeOut)
+def narrate_report(report_id: str, db: Session = Depends(get_db)):
+    report = _get_report_or_404(db, report_id)
+    payload = report.payload or {}
+    result = narrate(
+        {
+            "period_start": report.period_start.isoformat(),
+            "period_end": report.period_end.isoformat(),
+            "kpis": payload,
+            "top_gate_fails": (payload.get("operational") or {}).get(
+                "gate_fail_frequency", []
+            )[:5],
+        },
+        kind="report",
+        client_facing=True,
+    )
+    payload = {**payload, "narrative": result}
+    report.payload = payload
+    db.add(report)
+    db.commit()
+    return NarrativeOut(
+        narrative=result["narrative"],
+        provider=result.get("provider"),
+        model=result.get("model"),
+        cost_usd=result.get("cost_usd"),
+        used_llm=bool(result.get("used_llm")),
+    )
 
 
 @router.get("", response_model=list[ExecutiveReportOut])
