@@ -254,6 +254,7 @@ class CopilotResponse(BaseModel):
     model: str | None = None
     tier: str | None = None
     cost_usd: float | None = None
+    guardrail: dict[str, Any] | None = None  # F26 verdict
 
 
 class ExplainRequest(BaseModel):
@@ -306,6 +307,11 @@ class JobParseOut(BaseModel):
     fields: dict[str, Any] = Field(default_factory=dict)
     warnings: list[str] = Field(default_factory=list)
     missing_fields: list[str] = Field(default_factory=list)
+    # F21 intake upgrades (additive)
+    field_confidence: dict[str, float] = Field(default_factory=dict)
+    unmapped_terms: list[str] = Field(default_factory=list)
+    questions: list[str] = Field(default_factory=list)
+    parser: str = "offline"  # "llm" | "offline"
 
 
 class JobDedupeRequest(BaseModel):
@@ -395,6 +401,39 @@ class ExecutiveReportOut(BaseModel):
     payload: dict[str, Any] = Field(default_factory=dict)
 
     model_config = {"from_attributes": True}
+
+
+class FillabilityRequest(BaseModel):
+    """Requirement fillability: can each production actually be staffed?"""
+
+    requirement_ids: list[str] | None = None
+    limit: int = Field(default=12, ge=1, le=120)
+
+
+class FillabilityRow(BaseModel):
+    requirement_id: str
+    production_title: str
+    production_type: str
+    city: str
+    country: str
+    required_primary_role: str
+    application_deadline: date
+    talent_required: int
+    evaluated: int
+    eligible: int
+    recommended: int  # eligible AND score >= 70 (dataset recommendation rule)
+    excellent: int  # score >= 85
+    coverage_ratio: float  # eligible / talent_required
+    status: str  # Healthy | Attention Required | Critical | Blocked
+    sourcing_action: str
+    top_gate_fails: list[dict[str, Any]] = Field(default_factory=list)
+    shortlist_preview: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class FillabilityOut(BaseModel):
+    generated_at: datetime
+    rows: list[FillabilityRow]
+    summary: dict[str, Any] = Field(default_factory=dict)
 
 
 class StageLyncPersonOut(BaseModel):

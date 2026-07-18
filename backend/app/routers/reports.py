@@ -16,6 +16,8 @@ from sqlalchemy.orm import Session
 
 from ..ai.narrate import narrate
 from ..database import get_db
+from ..engine.matcher import build_audition_lookup, build_availability_lookup
+from ..engine.scoring import compute_score
 from ..models import (
     ExecutiveReport,
     MatchDecision,
@@ -25,7 +27,13 @@ from ..models import (
     Requirement,
     Talent,
 )
-from ..schemas import ExecutiveReportOut, ExecutiveReportRequest, NarrativeOut
+from ..schemas import (
+    ExecutiveReportOut,
+    ExecutiveReportRequest,
+    FillabilityOut,
+    FillabilityRequest,
+    NarrativeOut,
+)
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
@@ -177,6 +185,116 @@ def compute_executive_kpis(
             "budget_vs_rate_delta_usd": round(avg_budget_max - avg_talent_rate, 2),
         },
     }
+
+
+def compute_fillability_rows(db: Session, requirement_ids: list[str] | None, limit: int) -> list[dict]:
+    """Live fillability per requirement: full 500-talent scan through the same
+    deterministic gates + scoring used by run_match (no ground-truth reads).
+
+    Status rule:
+      Blocked   -> zero eligible candidates
+      Critical  -> eligible < talent_required
+      Attention -> recommended < talent_required OR eligible < 2x talent_required
+      Healthy   -> otherwise
+    """
+    query = db.query(Requirement)
+    if requirement_ids:
+        query = query.filter(Requirement.requirement_id.in_(requirement_ids))
+    reqs = query.order_by(Requirement.application_deadline).limit(limit).all()
+    talents = db.query(Talent).all()
+
+    rows: list[dict] = []
+    for req in reqs:
+        availability_lookup = build_availability_lookup(db, req)
+        audition_lookup = build_audition_lookup(db, req.requirement_id)
+
+        eligible = recommended = excellent = 0
+        gate_fails: Counter[str] = Counter()
+        shortlist: list[dict] = []
+        for talent in talents:
+            result = compute_score(
+                req,
+                talent,
+                availability_lookup=availability_lookup,
+                audition_score=audition_lookup.get(talent.talent_id),
+            )
+            if result["eligible"]:
+                eligible += 1
+                score = float(result["score"] or 0.0)
+                if score >= 70:
+                    recommended += 1
+                    shortlist.append(
+                        {
+                            "talent_id": talent.talent_id,
+                            "full_name": talent.full_name,
+                            "score": score,
+                            "match_category": result["match_category"],
+                        }
+                    )
+                if score >= 85:
+                    excellent += 1
+            else:
+                for gate in result["failed_gates"]:
+                    gate_fails[gate] += 1
+
+        needed = max(1, int(req.talent_required or 1))
+        if eligible == 0:
+            status = "Blocked"
+            action = "No eligible candidates in the pool — relax constraints (what-if) or source externally via StageLync."
+        elif eligible < needed:
+            status = "Critical"
+            action = f"Only {eligible} eligible for {needed} positions — immediate sourcing or requirement adjustment needed."
+        elif recommended < needed or eligible < 2 * needed:
+            status = "Attention Required"
+            action = f"Shortlist depth is thin ({recommended} recommended / {eligible} eligible for {needed} positions) — widen search or review top gate failures."
+        else:
+            status = "Healthy"
+            action = "Sufficient qualified talent — proceed to shortlist review."
+
+        shortlist.sort(key=lambda s: -s["score"])
+        rows.append(
+            {
+                "requirement_id": req.requirement_id,
+                "production_title": req.production_title,
+                "production_type": req.production_type,
+                "city": req.city,
+                "country": req.country,
+                "required_primary_role": req.required_primary_role,
+                "application_deadline": req.application_deadline,
+                "talent_required": needed,
+                "evaluated": len(talents),
+                "eligible": eligible,
+                "recommended": recommended,
+                "excellent": excellent,
+                "coverage_ratio": round(eligible / needed, 2),
+                "status": status,
+                "sourcing_action": action,
+                "top_gate_fails": [
+                    {"gate": g, "count": c} for g, c in gate_fails.most_common(3)
+                ],
+                "shortlist_preview": shortlist[:5],
+            }
+        )
+    return rows
+
+
+@router.post("/fillability", response_model=FillabilityOut)
+def fillability_report(body: FillabilityRequest, db: Session = Depends(get_db)):
+    rows = compute_fillability_rows(db, body.requirement_ids, body.limit)
+    by_status = Counter(r["status"] for r in rows)
+    return FillabilityOut(
+        generated_at=datetime.utcnow(),
+        rows=rows,
+        summary={
+            "requirements_analysed": len(rows),
+            "healthy": by_status.get("Healthy", 0),
+            "attention_required": by_status.get("Attention Required", 0),
+            "critical": by_status.get("Critical", 0),
+            "blocked": by_status.get("Blocked", 0),
+            "total_positions": sum(r["talent_required"] for r in rows),
+            "total_recommended": sum(r["recommended"] for r in rows),
+        },
+    )
 
 
 @router.post("/executive", response_model=ExecutiveReportOut)

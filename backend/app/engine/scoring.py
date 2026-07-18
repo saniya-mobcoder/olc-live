@@ -260,4 +260,7 @@ def compute_score(
         ],
         "distance_km": round(d["distance_km"], 1),
         "audition_score": round(audition_score, 2) if audition_score is not None else None,
+        # Raw gate output (contains sets — NOT JSON-safe). Consumed by
+        # engine.layers for the F01 gate graph, stripped before persistence.
+        "gate_result": gate,
     }

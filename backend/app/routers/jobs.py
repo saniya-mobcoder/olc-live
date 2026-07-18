@@ -9,6 +9,13 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from ..ai.intake import (
+    assign_confidence,
+    build_requirement_vocab,
+    clarifying_questions,
+    ground_fields,
+    llm_extract,
+)
 from ..ai.providers import AIConfigError, TaskTier, chat
 from ..database import get_db
 from ..embeddings import OpenAIConfigError, cosine_similarity, embed_text
@@ -237,17 +244,27 @@ def _requirement_document(req: Requirement) -> str:
 
 
 @router.post("/parse", response_model=JobParseOut)
-def parse_job(body: JobParseRequest):
+def parse_job(body: JobParseRequest, db: Session = Depends(get_db)):
     brief = (body.brief_text or "").strip()
     if len(brief) < 20:
         raise HTTPException(status_code=400, detail="brief_text too short")
 
+    vocab = build_requirement_vocab(db)
+
     used_llm = False
+    llm_confidence: dict[str, float] | None = None
+    llm_questions: list[str] = []
     try:
-        fields = _llm_parse(brief)
+        payload = llm_extract(brief, vocab)  # P1 — quality tier, vocab-grounded
+        fields = payload["fields"]
+        llm_confidence = payload.get("field_confidence") or {}
+        llm_questions = list(payload.get("questions") or [])
         used_llm = True
-    except (OpenAIConfigError, AIConfigError, Exception):
+    except Exception:
         fields = _offline_parse(brief)
+
+    # Vocabulary grounding — never let an invented skill/role reach matching.
+    fields, unmapped = ground_fields(fields, vocab)
 
     # Enrich city coords if missing
     city = str(fields.get("city") or "").strip().lower()
@@ -261,8 +278,23 @@ def parse_job(body: JobParseRequest):
     warnings, missing = _assess_fields(fields)
     if not used_llm:
         warnings.append("Parsed offline (no API key or LLM failed)")
+    if unmapped:
+        warnings.append(
+            "Some extracted terms are not in the dataset vocabulary — review before confirming"
+        )
 
-    return JobParseOut(fields=fields, warnings=warnings, missing_fields=missing)
+    questions = list(dict.fromkeys([*llm_questions, *clarifying_questions(fields)]))
+    confidence = assign_confidence(fields, llm_confidence=llm_confidence, used_llm=used_llm)
+
+    return JobParseOut(
+        fields=fields,
+        warnings=warnings,
+        missing_fields=missing,
+        field_confidence=confidence,
+        unmapped_terms=unmapped,
+        questions=questions,
+        parser="llm" if used_llm else "offline",
+    )
 
 
 @router.post("/dedupe", response_model=JobDedupeOut)

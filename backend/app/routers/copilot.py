@@ -251,4 +251,5 @@ def chat_endpoint(body: CopilotRequest, db: Session = Depends(get_db)):
         model=outcome.get("model"),
         tier=outcome.get("tier"),
         cost_usd=outcome.get("cost_usd"),
+        guardrail=outcome.get("guardrail"),
     )

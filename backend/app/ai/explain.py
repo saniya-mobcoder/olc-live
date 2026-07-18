@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from .guardrails import is_grounded, strip_ungrounded_numbers
+from .guardrails import enforce
 from .providers import AIConfigError, TaskTier, chat
 
 _SYSTEM = (
@@ -60,21 +60,19 @@ def explain_match(facts: dict[str, Any], *, skip_llm_if_clear_reject: bool = Tru
             temperature=0.2,
             max_tokens=280,
         )
-        text = result.content or fallback_explain(facts)
-        grounded = is_grounded(text, facts)
-        if not grounded:
-            text = strip_ungrounded_numbers(text, facts)
-            grounded = is_grounded(text, facts)
-            if not grounded:
-                text = fallback_explain(facts)
-                grounded = True
+        raw = result.content or fallback_explain(facts)
+        # F26: full validation (numbers + protected attributes + gate polarity)
+        text, verdict, used_fallback = enforce(
+            raw, facts, fallback=lambda: fallback_explain(facts)
+        )
         return {
             "explanation": text,
-            "provider": result.provider,
+            "provider": "template" if used_fallback else result.provider,
             "model": result.model,
             "cost_usd": result.cost_usd,
-            "grounded": grounded,
-            "used_llm": True,
+            "grounded": verdict["verdict"] == "pass" or used_fallback,
+            "guardrail": verdict,
+            "used_llm": not used_fallback,
             "tokens_in": result.tokens_in,
             "tokens_out": result.tokens_out,
             "latency_ms": result.latency_ms,

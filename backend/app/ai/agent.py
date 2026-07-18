@@ -5,6 +5,7 @@ import json
 import re
 from typing import Any
 
+from .guardrails import enforce
 from .providers import AIConfigError, TaskTier, chat
 
 _TOOLISH = re.compile(
@@ -43,13 +44,27 @@ def run_copilot_chat(
             temperature=0.2,
             max_tokens=700,
         )
+        # F26: copilot replies are validated against the tool-provided context.
+        # Numbers must come from CONTEXT (or the user's own question); protected
+        # attributes are blocked. Gate polarity check applies when context
+        # carries an `eligible` flag.
+        facts = {"context": context, "question": message}
+        reply, verdict, used_fallback = enforce(
+            result.content or "",
+            facts,
+            fallback=lambda: (
+                "I could not produce a verified answer from the available data. "
+                "Please check the score breakdown and audit trail, or rephrase the question."
+            ),
+        )
         return {
-            "reply": result.content,
-            "provider": result.provider,
+            "reply": reply,
+            "provider": "template" if used_fallback else result.provider,
             "model": result.model,
             "tier": tier.value,
             "cost_usd": result.cost_usd,
-            "used_llm": True,
+            "guardrail": verdict,
+            "used_llm": not used_fallback,
         }
     except AIConfigError as exc:
         return {

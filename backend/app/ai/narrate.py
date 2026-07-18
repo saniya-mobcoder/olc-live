@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from .guardrails import enforce
 from .providers import AIConfigError, TaskTier, chat
 
 
@@ -47,12 +48,18 @@ def narrate(
             temperature=0.3,
             max_tokens=350,
         )
+        raw = result.content or fallback_narrative(payload, kind)
+        # F26: narratives were previously unguarded — now validated like all output.
+        text, verdict, used_fallback = enforce(
+            raw, payload, fallback=lambda: fallback_narrative(payload, kind)
+        )
         return {
-            "narrative": result.content or fallback_narrative(payload, kind),
-            "provider": result.provider,
+            "narrative": text,
+            "provider": "template" if used_fallback else result.provider,
             "model": result.model,
             "cost_usd": result.cost_usd,
-            "used_llm": True,
+            "guardrail": verdict,
+            "used_llm": not used_fallback,
         }
     except (AIConfigError, Exception):
         return {

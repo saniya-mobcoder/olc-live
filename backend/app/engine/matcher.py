@@ -17,6 +17,7 @@ from ..models import (
 )
 from .feedback import RULE_WEIGHT, FEEDBACK_WEIGHT, feedback_prior, hybrid_sort_score
 from .gates import contract_window
+from .layers import four_layer_score, gate_graph, near_miss_gaps
 from .scoring import WEIGHTS, compute_score
 
 # Requirement fields a what-if scenario is allowed to override.
@@ -89,6 +90,46 @@ def build_audition_lookup(db: Session, requirement_id: str) -> dict[str, float]:
     return {r.talent_id: r.panel_score for r in rows}
 
 
+def build_semantic_lookup(db: Session, req: Requirement) -> dict[str, float]:
+    """Layer-3 semantic relevance (0-100) per talent via stored embeddings.
+
+    Best-effort and strictly optional: returns {} when embeddings or the
+    OpenAI key are unavailable (tests, offline demos). Never raises.
+    """
+    try:
+        from ..embeddings import embed_text
+
+        req_text = " ".join(
+            str(x)
+            for x in (
+                req.required_primary_role,
+                req.production_type,
+                getattr(req, "venue_type", None),
+                " ".join(req.mandatory_skills or []),
+                " ".join(req.preferred_skills or []),
+                getattr(req, "special_instructions", None),
+            )
+            if x
+        )
+        qvec = embed_text(req_text)
+    except Exception:
+        return {}
+
+    import math
+
+    qnorm = math.sqrt(sum(v * v for v in qvec)) or 1.0
+    lookup: dict[str, float] = {}
+    for talent in db.query(Talent).filter(Talent.embedding.isnot(None)).all():
+        vec = talent.embedding or []
+        if len(vec) != len(qvec):
+            continue
+        dot = sum(a * b for a, b in zip(qvec, vec))
+        tnorm = math.sqrt(sum(v * v for v in vec)) or 1.0
+        cosine = dot / (qnorm * tnorm)
+        lookup[talent.talent_id] = round(max(0.0, min(1.0, (cosine + 1) / 2)) * 100.0, 2)
+    return lookup
+
+
 def run_match(
     db: Session,
     requirement_id: str,
@@ -102,7 +143,7 @@ def run_match(
     if not req:
         raise ValueError(f"Requirement {requirement_id} not found")
 
-    if ranking_mode not in ("rules_only", "hybrid"):
+    if ranking_mode not in ("rules_only", "hybrid", "advisory"):
         raise ValueError(f"Unsupported ranking_mode: {ranking_mode}")
 
     overrides = params_override or {}
@@ -144,12 +185,15 @@ def run_match(
     talents = db.query(Talent).all()
     scored: list[dict[str, Any]] = []
 
+    semantic_lookup = build_semantic_lookup(db, effective)  # type: ignore[arg-type]
+
     for talent in talents:
+        aud = audition_lookup.get(talent.talent_id)
         result = compute_score(
             effective,  # type: ignore[arg-type]
             talent,
             availability_lookup=availability_lookup,
-            audition_score=audition_lookup.get(talent.talent_id),
+            audition_score=aud,
         )
         prior = feedback_prior(db, talent, req)
         breakdown = dict(result["breakdown"] or {})
@@ -158,8 +202,30 @@ def run_match(
         rule_score = float(result["score"] or 0.0)
         hybrid = hybrid_sort_score(rule_score, prior)
         breakdown["hybrid_score"] = hybrid
+
+        # --- F01/F02 pilot layers (additive, advisory; parity untouched) ---
+        raw_gate = result.pop("gate_result", None)
+        if raw_gate is not None:
+            report = gate_graph(effective, raw_gate)  # type: ignore[arg-type]
+            breakdown["gate_graph"] = report
+            breakdown["near_miss"] = near_miss_gaps(raw_gate, report)
+        layers = four_layer_score(
+            effective,  # type: ignore[arg-type]
+            talent,
+            result,
+            feedback_prior_value=prior,
+            semantic_score=semantic_lookup.get(talent.talent_id),
+            audition_score=aud,
+        )
+        breakdown["layers"] = layers
+
         result["breakdown"] = breakdown
-        result["sort_score"] = hybrid if ranking_mode == "hybrid" else rule_score
+        if ranking_mode == "hybrid":
+            result["sort_score"] = hybrid
+        elif ranking_mode == "advisory":
+            result["sort_score"] = layers["advisory_score"] if layers["advisory_score"] is not None else rule_score
+        else:
+            result["sort_score"] = rule_score
         scored.append({"talent": talent, **result})
 
         if result["eligible"]:
@@ -240,12 +306,26 @@ def score_talent_against_requirement(
 
     availability_lookup = build_availability_lookup(db, req)
     audition_lookup = build_audition_lookup(db, requirement_id)
+    aud = audition_lookup.get(talent.talent_id)
     result = compute_score(
         req,
         talent,
         availability_lookup=availability_lookup,
-        audition_score=audition_lookup.get(talent.talent_id),
+        audition_score=aud,
     )
+
+    raw_gate = result.pop("gate_result", None)
+    gate_report = gate_graph(req, raw_gate) if raw_gate is not None else []
+    near_miss = near_miss_gaps(raw_gate, gate_report) if raw_gate is not None else None
+    prior = feedback_prior(db, talent, req)
+    layers = four_layer_score(
+        req,
+        talent,
+        result,
+        feedback_prior_value=prior,
+        audition_score=aud,
+    )
+
     return {
         "talent_id": talent_id,
         "requirement_id": requirement_id,
@@ -258,6 +338,9 @@ def score_talent_against_requirement(
         "risk_factors": result["risk_factors"],
         "breakdown": result["breakdown"],
         "distance_km": result["distance_km"],
+        "gate_graph": gate_report,
+        "near_miss": near_miss,
+        "layers": layers,
     }
 
 
